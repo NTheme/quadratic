@@ -14,6 +14,11 @@ namespace quadratic {
      */
     static int solve_linear(long double b, long double c, long double *x1);
 
+    /**
+     * @brief Check if Equation is valid without errors
+     * @param *equation - Checked Equation
+     * @return 0 if vavlid and QE_QUAD_ERROR if not
+     */
     inline int equation_valid(const Equation *equation) {
         if (equation == NULL || !isfinite(equation->a) || !isfinite(equation->b) || !isfinite(equation->c) || !isfinite(equation->x1) || !isfinite(equation->x2))
             return QE_QUAD_ERROR;
@@ -81,7 +86,7 @@ namespace quadratic {
         return read;
     }
 
-    int terminal_input(Equation ***equations, int argc, const char *argv[]) {
+    int terminal_input(Equation ***equations, int argc, const char **argv) {
         ASSERTIF(argv      != NULL, "nullptr in argv",      0);
         ASSERTIF(equations != NULL, "nullptr in equations", 0);
 
