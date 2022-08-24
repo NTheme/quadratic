@@ -5,7 +5,7 @@
 #include "test.h"
 
 namespace testing {
-    int inittests(const char *filename, quadratic::Equation ***tests) {
+    int init_tests(const char *filename, quadratic::Equation ***tests) {
         ASSERTIF(tests    != NULL, "error in equation", 0);
         ASSERTIF(filename != NULL, "error in filename", 0);
         
@@ -18,45 +18,53 @@ namespace testing {
         int numroots = 0, read = 0;
         for (; fscanf(input, "%Lf %Lf %Lf %d %Lf %Lf", &a, &b, &c, &numroots, &x1, &x2) == 6; ++read) {
             if (read % STEP == 0) {
-                *tests = quadratic::reallocequations(*tests, read + STEP);
+                *tests = quadratic::realloc_equations(*tests, read + STEP);
             }
-            (*tests)[read] = quadratic::makeequation(a, b, c, numroots, x1, x2);
+            (*tests)[read] = quadratic::make_equation(a, b, c, numroots, x1, x2);
         }
 
         return read;
     }
 
-    int isequalroots(int ax1, int ax2, int bx1, int bx2) {
-        return (maths::iszero(ax1 - bx1) && maths::iszero(ax2 - bx2)) ||
-               (maths::iszero(ax1 - bx2) && maths::iszero(ax2 - bx1));
+    int is_equal_roots(const quadratic::Equation *a, const quadratic::Equation* b) {
+        if (a->num_roots != b->num_roots) {
+            return 0;
+        }
+        if (a->num_roots == 1 && !common::is_zero(a->x1 - b->x1)) {
+            return 0;
+        }
+
+        return (common::is_zero(a->x1 - b->x1) && common::is_zero(a->x2 - b->x2)) ||
+               (common::is_zero(a->x1 - b->x2) && common::is_zero(a->x2 - b->x1));
     }
 
-    int testquadratic(const char *filename) {
+    int test_quadratic(const char *filename) {
         ASSERTIF(filename != NULL, "error in filename", 0);
         
         printf("\n# Testing proram...\n");
 
         quadratic::Equation **tests = NULL;
-        int numtests = inittests(filename, &tests);
+        int numtests = init_tests(filename, &tests);
 
         printf("\nNumber of tests: %3d\n", numtests);
 
         for (int curtest = 0; curtest < numtests; ++curtest) {
             printf("Test %d...", curtest + 1);
 
-            quadratic::Equation* curequation = tests[curtest];
-            curequation->numroots = quadratic::solveequation(curequation);
+            quadratic::Equation* cur_equation = tests[curtest];
+            cur_equation->num_roots = quadratic::solve_equation(cur_equation);
 
-
-            if (isequalroots(curequation->x1, curequation->x2, tests[curtest]->x1, tests[curtest]->x2)) {
+            if (is_equal_roots(cur_equation, tests[curtest])) {
                 printf("OK!\n");
             } else {
                 printf("FAILED!\n" "  EQUATION: a = %Lf, b = %Lf, c = %Lf\n" "  program answer: ", tests[curtest]->a, tests[curtest]->b, tests[curtest]->c);
-                quadratic::printroots(curequation);
+                quadratic::print_roots(cur_equation);
                 printf("  correct answer: ");
-                quadratic::printroots(tests[curtest]);
+                quadratic::print_roots(tests[curtest]);
             }
         }
+
+        free_equations(tests, numtests);
         printf("\n");
         return 0;
     }

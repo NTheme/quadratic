@@ -1,38 +1,38 @@
 #include <stdio.h>
 #include <math.h>
-#include "common.h"/////////sn case
+#include "common.h"
 #include "quadratic.h"
 
 namespace quadratic {
-    inline int equationvalid(const Equation *equation) {
+    inline int equation_valid(const Equation *equation) {
         if (equation == NULL || !isfinite(equation->a) || !isfinite(equation->b) || !isfinite(equation->c) || !isfinite(equation->x1) || !isfinite(equation->x2))
             return QE_QUAD_ERROR;
         return 0;
     }
 
-    Equation *makeequation(long double a, long double b, long double c, int numroots, long double x1, long double x2) {
+    Equation *make_equation(long double a, long double b, long double c, int num_roots, long double x1, long double x2) {
         Equation *equation = (Equation *)calloc(1, sizeof(Equation));
-        ASSERTIF(!equationvalid(equation), "unable to alloc", NULL);
+        ASSERTIF(!equation_valid(equation), "unable to alloc", NULL);
         
-        equation->a = a, equation->b = b, equation->c = c, equation->numroots = numroots, equation->x1 = x1, equation->x2 = x2;
+        equation->a = a, equation->b = b, equation->c = c, equation->num_roots = num_roots, equation->x1 = x1, equation->x2 = x2;
         return equation;
     }
 
-    Equation **reallocequations(Equation **equations, int size) {
-        Equation **newequations = (Equation **)realloc(equations, size * sizeof(Equation *));
-        ASSERTIF(newequations != NULL, "nullptr in equations", NULL);
+    Equation **realloc_equations(Equation **equations, int size) {
+        Equation **new_equations = (Equation **)realloc(equations, size * sizeof(Equation *));
+        ASSERTIF(new_equations != NULL, "nullptr in equations", NULL);
         
-        return newequations;
+        return new_equations;
     }
 
-    void freeequations(Equation **equations, int quantity) {
+    void free_equations(Equation **equations, int quantity) {
         for (int i = 0; i < quantity; i++) {
             free(equations[i]);
         }
         free(equations);
     }
 
-    int streaminput(Equation **equation, FILE *stream) {
+    int stream_input(Equation **equation, FILE *stream) {
         ASSERTIF(stream   != NULL, "nullptr in stream",   0);
         ASSERTIF(equation != NULL, "nullptr in equation", 0);
 
@@ -41,19 +41,19 @@ namespace quadratic {
             return 0;
         }
 
-        *equation = makeequation(a, b, c);
+        *equation = make_equation(a, b, c);
         return 1;
     }
 
-    int fullstreaminput(Equation ***equations, FILE *stream) {
+    int full_stream_input(Equation ***equations, FILE *stream) {
         ASSERTIF(stream    != NULL, "nullptr in stream",    0);
         ASSERTIF(equations != NULL, "nullptr in equations", 0);
 
         Equation *equation = NULL;
         int read = 0;
-        for (; streaminput(&equation, stream) == 1; ++read) {
+        for (; stream_input(&equation, stream) == 1; ++read) {
             if (read % STEP == 0) {
-                *equations = reallocequations(*equations, read + STEP);
+                *equations = realloc_equations(*equations, read + STEP);
             }
             (*equations)[read] = equation;
         }
@@ -61,7 +61,7 @@ namespace quadratic {
         return read;
     }
 
-    int terminalinput(Equation ***equations, int argc, const char *argv[]) {
+    int terminal_input(Equation ***equations, int argc, const char *argv[]) {
         ASSERTIF(argv      != NULL, "nullptr in argv",      0);
         ASSERTIF(equations != NULL, "nullptr in equations", 0);
 
@@ -70,24 +70,24 @@ namespace quadratic {
             if (input == NULL) {
                 return 0;
             }
-            return fullstreaminput(equations, input);
+            return full_stream_input(equations, input);
         }
 
         long double a = 0, b = 0, c = 0;
         int read = 0, numequations = (argc - 1) / 3;
         for (; read < numequations && (sscanf(argv[read + 1], "%Lf", &a) + sscanf(argv[read + 2], "%Lf", &b) + sscanf(argv[read + 3], "%Lf", &c) == 3); ++read) {
             if (read % STEP == 0) {
-                *equations = reallocequations(*equations, read + STEP);
+                *equations = realloc_equations(*equations, read + STEP);
             }
-            (*equations)[read] = makeequation(a, b, c);
+            (*equations)[read] = make_equation(a, b, c);
         }
         return read;
     }
 
-    int printroots(const Equation *equation) {
-        ASSERTIF(!equationvalid(equation), "QUAD_ERROR in equation", QE_QUAD_ERROR);
+    int print_roots(const Equation *equation) {
+        ASSERTIF(!equation_valid(equation), "QUAD_ERROR in equation", QE_QUAD_ERROR);
 
-        switch (equation->numroots) {
+        switch (equation->num_roots) {
         case RN_INF:
             printf("infinity of roots\n");
             break;
@@ -110,7 +110,7 @@ namespace quadratic {
         return 0;
     }
 
-    int solvelinear(long double b, long double c, long double *x1) {
+    int solve_linear(long double b, long double c, long double *x1) {
         ASSERTIF(x1 != NULL, "nullptr in x1", 1);
 
         if (b == 0) {
@@ -121,19 +121,19 @@ namespace quadratic {
         return RN_ONE;
     }
 
-    int solveequation(Equation *equation) {
-        ASSERTIF(!equationvalid(equation), "QUAD_ERROR in equation", QE_QUAD_ERROR);
+    int solve_equation(Equation *equation) {
+        ASSERTIF(!equation_valid(equation), "QUAD_ERROR in equation", QE_QUAD_ERROR);
 
         long double a = equation->a, b = equation->b, c = equation->c;
 
         if (a == 0)
-            return solvelinear(b, c, &equation->x1);
+            return solve_linear(b, c, &equation->x1);
 
         long double discriminant = b * b - 4 * a * c;
         if (discriminant < 0)
             return RN_ZERO;
 
-        if (iszero(discriminant)) {
+        if (common::is_zero(discriminant)) {
             equation->x1 = -b / (2 * a);
             return RN_ONE;
         }
