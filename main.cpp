@@ -1,5 +1,5 @@
 ﻿#include <stdio.h>
-#include <stdlib.h>
+
 #include "quadratic.h"
 #include "test.h"
 
@@ -11,10 +11,10 @@ int main(int argc, const char *argv[]) {
 	printf("# Program for solving quadratic equations a * x^2 + b * x + c = 0\n");
 	printf("# By NThemeDEV (c) 2022 ver. 0.1\n");
 
-	testing::testquadratic("tests.txt");
+	testing::test_quadratic("tests.txt");
 
 	quadratic::Equation **equations = NULL;
-	int numequations = quadratic::terminalinput(&equations, argc, argv);
+	int numequations = quadratic::terminal_input(&equations, argc, argv);
 
 	int inputmore = 1;
 	if (argc > 1) {		
@@ -33,10 +33,10 @@ int main(int argc, const char *argv[]) {
 			clearbuffer();
 		}
 
-		equations = quadratic::reallocequations(equations, numequations + add);
+		equations = quadratic::realloc_equations(equations, numequations + add);
 		for (int i = 0; i < add; i++) {
 			printf("Input a, b, c of %d your extra equation divided by space: ", i + 1);
-			if (streaminput(&equations[numequations + i]) != 1) {
+			if (stream_input(&equations[numequations + i]) != 1) {
 				printf("Wrong input! Try again. ");
 				clearbuffer();
 				i--;
@@ -46,16 +46,16 @@ int main(int argc, const char *argv[]) {
 	}
 
 	for (int i = 0; i < numequations; i++) {
-		printf("Equation %d with a = %Lf, b = %Lf and c = %Lf ", i + 1, equations[i]->a, equations[i]->b, equations[i]->c);
+		printf("Equation %d with a = %+-10.5Lg b = %+-10.5Lg and c = %+-10.5Lg ", i + 1, equations[i]->a, equations[i]->b, equations[i]->c);
 
-		if ((equations[i]->numroots = quadratic::solveequation(equations[i])) == quadratic::QE_QUAD_ERROR) {
+		if ((equations[i]->num_roots = quadratic::solve_equation(equations[i])) == quadratic::QE_QUAD_ERROR) {
 			printf("is unable to be solved!\n");
 		} else {
 			printf("has ");
-			printroots(equations[i]);
+			print_roots(equations[i]);
 		}
 	}
 
-	freeequations(equations, numequations);
+	free_equations(equations, numequations);
 	return 0;
 }
