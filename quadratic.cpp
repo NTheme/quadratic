@@ -5,6 +5,15 @@
 #include "quadratic.h"
 
 namespace quadratic {
+    /**
+     * @brief Solving linear equation
+     * @param b  - Coefficient of x
+     * @param c  - Free coefficient
+     * @param x1 - Root
+     * @return number of roots to num_roots (look ROOT_NUMBER)
+     */
+    static int solve_linear(long double b, long double c, long double *x1);
+
     inline int equation_valid(const Equation *equation) {
         if (equation == NULL || !isfinite(equation->a) || !isfinite(equation->b) || !isfinite(equation->c) || !isfinite(equation->x1) || !isfinite(equation->x2))
             return QE_QUAD_ERROR;
@@ -15,11 +24,16 @@ namespace quadratic {
         Equation *equation = (Equation *)calloc(1, sizeof(Equation));
         ASSERTIF(!equation_valid(equation), "unable to alloc", NULL);
         
-        equation->a = a, equation->b = b, equation->c = c, equation->num_roots = num_roots, equation->x1 = x1, equation->x2 = x2;
+        equation->a  = a;
+        equation->b  = b;
+        equation->c  = c;
+        equation->x1 = x1;
+        equation->x2 = x2;
+        equation->num_roots = num_roots;
         return equation;
     }
 
-    Equation **realloc_equations(Equation **equations, int size) {
+    Equation **realloc_equations(Equation **equations, size_t size) {
         Equation **new_equations = (Equation **)realloc(equations, size * sizeof(Equation *));
         ASSERTIF(new_equations != NULL, "nullptr in equations", NULL);
         
@@ -39,7 +53,7 @@ namespace quadratic {
         ASSERTIF(stream   != NULL, "nullptr in stream",   0);
         ASSERTIF(equation != NULL, "nullptr in equation", 0);
 
-        long double a = 0, b = 0, c = 0;
+        long double a = NAN, b = NAN, c = NAN;
         if (fscanf(stream, "%Lf %Lf %Lf", &a, &b, &c) != 3) {
             return 0;
         }
@@ -52,11 +66,14 @@ namespace quadratic {
         ASSERTIF(stream    != NULL, "nullptr in stream",    0);
         ASSERTIF(equations != NULL, "nullptr in equations", 0);
 
+        size_t size = 1;
+        *equations = realloc_equations(*equations, (size *= 2));
+
         Equation *equation = NULL;
         int read = 0;
         for (; stream_input(&equation, stream) == 1; ++read) {
-            if (read % STEP == 0) {
-                *equations = realloc_equations(*equations, read + STEP);
+            if (read == (int)size) {
+                *equations = realloc_equations(*equations, (size *= 2));
             }
             (*equations)[read] = equation;
         }
@@ -76,11 +93,14 @@ namespace quadratic {
             return full_stream_input(equations, input);
         }
 
+        size_t size = 1;
+        *equations = realloc_equations(*equations, (size *= 2));
+
         long double a = 0, b = 0, c = 0;
         int read = 0, numequations = (argc - 1) / 3;
         for (; read < numequations && (sscanf(argv[read + 1], "%Lf", &a) + sscanf(argv[read + 2], "%Lf", &b) + sscanf(argv[read + 3], "%Lf", &c) == 3); ++read) {
-            if (read % STEP == 0) {
-                *equations = realloc_equations(*equations, read + STEP);
+            if (read == (int)size) {
+                *equations = realloc_equations(*equations, (size *= 2));
             }
             (*equations)[read] = make_equation(a, b, c);
         }
@@ -107,17 +127,17 @@ namespace quadratic {
             printf("uninitialized\n");
             break;
         default:
-            return 1;
+            ASSERTIF(0, "default case", 1);
         }
 
         return 0;
     }
 
-    int solve_linear(long double b, long double c, long double *x1) {
+    static int solve_linear(long double b, long double c, long double *x1) {
         ASSERTIF(x1 != NULL, "nullptr in x1", 1);
 
-        if (b == 0) {
-            return (c == 0) ? RN_INF : RN_ZERO;
+        if (common::is_zero(b)) {
+            return (common::is_zero(c)) ? RN_INF : RN_ZERO;
         }
 
         *x1 = -c / b;
@@ -129,8 +149,9 @@ namespace quadratic {
 
         long double a = equation->a, b = equation->b, c = equation->c;
 
-        if (a == 0)
+        if (common::is_zero(a)) {
             return solve_linear(b, c, &equation->x1);
+        }
 
         long double discriminant = b * b - 4 * a * c;
         if (discriminant < 0)

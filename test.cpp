@@ -1,11 +1,27 @@
 #include <stdio.h>
+#include <math.h>
 
 #include "common.h"
 #include "quadratic.h"
 #include "test.h"
 
 namespace testing {
-    int init_tests(const char *filename, quadratic::Equation ***tests) {
+    /**
+     * @brief Checks if roots of equations are equal
+     * @param [in] *a - First Equation 
+     * @param [in] *b - Second Equation
+     * @return 1 if roots are equal, 0 if not and -1 if error 
+     */
+    static int is_equal_roots(const quadratic::Equation *a, const quadratic::Equation* b);
+    /**
+     * @brief Read tests from file with name filename
+     * @param [in]  filename - name of file with tests
+     * @param [out] tests    - read Equation tests
+     * @return number of read tests
+     */
+    static int init_tests(const char *filename, quadratic::Equation ***tests);
+
+    static int init_tests(const char *filename, quadratic::Equation ***tests) {
         ASSERTIF(tests    != NULL, "error in equation", 0);
         ASSERTIF(filename != NULL, "error in filename", 0);
         
@@ -14,11 +30,14 @@ namespace testing {
             return 0;
         }
 
-        long double a = 0, b = 0, c = 0, x1 = 0, x2 = 0;
+        size_t size = 1;
+        *tests = quadratic::realloc_equations(*tests, (size *= 2));
+
+        long double a = NAN, b = NAN, c = NAN, x1 = NAN, x2 = NAN;
         int numroots = 0, read = 0;
         for (; fscanf(input, "%Lf %Lf %Lf %d %Lf %Lf", &a, &b, &c, &numroots, &x1, &x2) == 6; ++read) {
-            if (read % STEP == 0) {
-                *tests = quadratic::realloc_equations(*tests, read + STEP);
+            if (read == (int)size) {
+                *tests = quadratic::realloc_equations(*tests, (size *= 2));
             }
             (*tests)[read] = quadratic::make_equation(a, b, c, numroots, x1, x2);
         }
@@ -26,7 +45,7 @@ namespace testing {
         return read;
     }
 
-    int is_equal_roots(const quadratic::Equation *a, const quadratic::Equation* b) {
+    static int is_equal_roots(const quadratic::Equation *a, const quadratic::Equation* b) {
         ASSERTIF(a != NULL, "nullptr in a", -1);
         ASSERTIF(b != NULL, "nullptr in b", -1);
 
@@ -70,7 +89,7 @@ namespace testing {
                 printf("OK!\n");
                 break;
             default:
-                return 0;
+                ASSERTIF(0, "default case", 1);
             }
         }
 

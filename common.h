@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <errno.h>
 
+#ifndef _NDEBUGMY
 #define ASSERTIF(cond, desc, val) {                                                                                                  \
     assert((cond) && desc);                                                                                                          \
     if (!(cond)) {                                                                                                                   \
@@ -12,22 +13,30 @@
         return val;                                                                                                                  \
     }                                                                                                                                \
 }
+#else
+#define ASSERTIF(cond, desc, val))
+#endif
 
-const int    STEP = 100;
 const double EPS  = 1e-7;
 
 /**
-@brief   This namespace includes non-standart math functions that was used in quadratic equarions solver.
-@details 
-*/
+ * @brief   This namespace includes non-standart math functions that was used in quadratic equarions solver.
+ * @details 
+ */
 namespace common {
     /**
-    @brief   This function chechs if argument val is equal to zero.
-    @details As double has no definite value I must to check if absolute distance between 0 and val is less than EPS (it's about 1e7).
-    @param [in] val - vaue to check
-    @return 1 If distance is less than DIV and 0 otherwise
-    */
+     * @brief   This function chechs if argument val is equal to zero.
+     * @details As double has no definite value I must to check if absolute distance between 0 and val is less than EPS (it's about 1e7).
+     * @param [in] val - vaue to check
+     * @return 1 If distance is less than DIV and 0 otherwise
+     */
     int is_zero(long double val);
+
+    /**
+     * @brief Clears input string buffer
+     * @return void
+     */
+    void clearbuffer();
 }
 
 #endif

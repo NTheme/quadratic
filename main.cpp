@@ -1,11 +1,8 @@
 ﻿#include <stdio.h>
 
 #include "quadratic.h"
+#include "common.h"
 #include "test.h"
-
-inline void clearbuffer() {
-	while (getchar() != '\n');
-}
 
 int main(int argc, const char *argv[]) {
 	printf("# Program for solving quadratic equations a * x^2 + b * x + c = 0\n");
@@ -16,29 +13,29 @@ int main(int argc, const char *argv[]) {
 	quadratic::Equation **equations = NULL;
 	int numequations = quadratic::terminal_input(&equations, argc, argv);
 
-	int inputmore = 1;
+	char inputmore = 0;
 	if (argc > 1) {		
-		printf("%d equations read from the terminal arguments (also file). Do you want to input manually (0 == no, 1 == yes)? ", numequations);
-		while (scanf("%d", &inputmore) != 1 || inputmore < 0 || inputmore > 1) {
+		printf("%d equations read from the terminal arguments (also file). Do you want to input manually (y or n)? ", numequations);
+		while (scanf("%c", &inputmore) != 1 || (inputmore != 'y'  && inputmore != 'n')) {
 			printf("Wrong input! Try again: ");
-			clearbuffer();
+			common::clearbuffer();
 		}
 	}
 
-	if (inputmore) {
+	if (inputmore == 'y') {
 		int add = 0;
 		printf("Input number of equations: ");
 		while (scanf("%d", &add) != 1 || add < 0) {
 			printf("Wrong input! Try again: ");
-			clearbuffer();
+			common::clearbuffer();
 		}
 
-		equations = quadratic::realloc_equations(equations, numequations + add);
+		equations = quadratic::realloc_equations(equations, (size_t)(numequations + add));
 		for (int i = 0; i < add; i++) {
 			printf("Input a, b, c of %d your extra equation divided by space: ", i + 1);
 			if (stream_input(&equations[numequations + i]) != 1) {
 				printf("Wrong input! Try again. ");
-				clearbuffer();
+				common::clearbuffer();
 				i--;
 			}
 		}
