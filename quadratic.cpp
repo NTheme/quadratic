@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+
 #include "common.h"
 #include "quadratic.h"
 
@@ -26,6 +27,8 @@ namespace quadratic {
     }
 
     void free_equations(Equation **equations, int quantity) {
+        ASSERTIF(equations != NULL, "nullptr in equations", );
+
         for (int i = 0; i < quantity; i++) {
             free(equations[i]);
         }
@@ -95,10 +98,10 @@ namespace quadratic {
             printf("zero roots\n");
             break;
         case RN_ONE:
-            printf("one root: %Lf\n", equation->x1);
+            printf("one root:  %+-10.5Lg\n", equation->x1);
             break;
         case RN_TWO:
-            printf("two roots: %Lf, %Lf\n", equation->x1, equation->x2);
+            printf("two roots: %+-10.5Lg %+-10.5Lg\n", equation->x1, equation->x2);
             break;
         case RN_DEFAULT:
             printf("uninitialized\n");

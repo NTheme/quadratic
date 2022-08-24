@@ -1,5 +1,5 @@
 ﻿#include <stdio.h>
-#include <stdlib.h>
+
 #include "quadratic.h"
 #include "test.h"
 
@@ -46,7 +46,7 @@ int main(int argc, const char *argv[]) {
 	}
 
 	for (int i = 0; i < numequations; i++) {
-		printf("Equation %d with a = %Lf, b = %Lf and c = %Lf ", i + 1, equations[i]->a, equations[i]->b, equations[i]->c);
+		printf("Equation %d with a = %+-10.5Lg b = %+-10.5Lg and c = %+-10.5Lg ", i + 1, equations[i]->a, equations[i]->b, equations[i]->c);
 
 		if ((equations[i]->num_roots = quadratic::solve_equation(equations[i])) == quadratic::QE_QUAD_ERROR) {
 			printf("is unable to be solved!\n");
