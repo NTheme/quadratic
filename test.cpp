@@ -2,10 +2,9 @@
 #include <math.h>
 
 #include "common.h"
-#include "quadratic.h"
 #include "test.h"
 
-namespace testing {
+namespace unit_tests {
     /**
      * @brief Checks if roots of equations are equal
      * @param [in] *a - First Equation 
@@ -13,41 +12,10 @@ namespace testing {
      * @return 1 if roots are equal, 0 if not and -1 if error 
      */
     static int is_equal_roots(const quadratic::Equation *a, const quadratic::Equation* b);
-    /**
-     * @brief Read tests from file with name filename
-     * @param [in]  filename - name of file with tests
-     * @param [out] tests    - read Equation tests
-     * @return number of read tests
-     */
-    static int init_tests(const char *filename, quadratic::Equation ***tests);
-
-    static int init_tests(const char *filename, quadratic::Equation ***tests) {
-        ASSERTIF(tests    != NULL, "error in equation", 0);
-        ASSERTIF(filename != NULL, "error in filename", 0);
-        
-        FILE *input = fopen(filename, "r");
-        if (input == NULL) {
-            return 0;
-        }
-
-        size_t size = 1;
-        *tests = quadratic::realloc_equations(*tests, (size *= 2));
-
-        long double a = NAN, b = NAN, c = NAN, x1 = NAN, x2 = NAN;
-        int numroots = 0, read = 0;
-        for (; fscanf(input, "%Lf %Lf %Lf %d %Lf %Lf", &a, &b, &c, &numroots, &x1, &x2) == 6; ++read) {
-            if (read == (int)size) {
-                *tests = quadratic::realloc_equations(*tests, (size *= 2));
-            }
-            (*tests)[read] = quadratic::make_equation(a, b, c, numroots, x1, x2);
-        }
-
-        return read;
-    }
 
     static int is_equal_roots(const quadratic::Equation *a, const quadratic::Equation* b) {
-        ASSERTIF(a != NULL, "nullptr in a", -1);
-        ASSERTIF(b != NULL, "nullptr in b", -1);
+        ASSERTIF(a != NULL, "nullptr in a", quadratic::QE_QUAD_ERROR);
+        ASSERTIF(b != NULL, "nullptr in b", quadratic::QE_QUAD_ERROR);
 
         if (a->num_roots != b->num_roots) {
             return 0;
@@ -60,40 +28,42 @@ namespace testing {
                (common::is_zero(a->x1 - b->x2) && common::is_zero(a->x2 - b->x1));
     }
 
-    int test_quadratic(const char *filename) {
-        ASSERTIF(filename != NULL, "error in filename", 0);
+    int test_quadratic(quadratic::Equation **tests, int num_tests) {
+        ASSERTIF(tests != NULL, "error in filename", 0);
         
-        printf("\n# Testing proram...\n");
+        printf("%s%sTesting proram...\n", COLORS::T_WHITE, COLORS::T_ARTICLE);
 
-        quadratic::Equation **tests = NULL;
-        int numtests = init_tests(filename, &tests);
+        printf("\n%sNumber of tests: %3d", COLORS::T_WHITE, num_tests);
 
-        printf("\nNumber of tests: %3d\n", numtests);
-
-        for (int curtest = 0; curtest < numtests; ++curtest) {
-            printf("Test %d...", curtest + 1);
+        for (int curtest = 0; curtest < num_tests; ++curtest) {
+            printf("%s\nTest %3d...", COLORS::T_WHITE, curtest + 1);
 
             quadratic::Equation cur_equation = *tests[curtest];
             cur_equation.num_roots = quadratic::solve_equation(&cur_equation);
 
             switch (is_equal_roots(&cur_equation, tests[curtest])) {
-            case -1:
+            case quadratic::QE_QUAD_ERROR:
+                free_equations(tests, num_tests);
                 return 0;
             case 0:
-                printf("FAILED!\n" "  EQUATION: a = %+-10.5Lg b = %+-10.5Lg c = %+-10.5Lg\n" "  program answer: ", tests[curtest]->a, tests[curtest]->b, tests[curtest]->c);
+                printf("%s%sWA!%s\n" "  %sEquation: ", COLORS::T_RED, COLORS::T_ARTICLE, COLORS::T_WHITE, COLORS::T_RED);
+                printf(                       "a = %+.8Lg%s\n", tests[curtest]->a, COLORS::T_WHITE);
+                printf("            %sb = %+.5Lg%s\n", COLORS::T_RED, tests[curtest]->b, COLORS::T_WHITE);
+                printf("            %sc = %+.5Lg%s\n", COLORS::T_RED, tests[curtest]->c, COLORS::T_WHITE);
+                printf("  \033[37;41mProgram answer: \033[30;46m");
                 quadratic::print_roots(&cur_equation);
-                printf("  correct answer: ");
+                printf("\033[34;47m\n  \033[37;41mCorrect answer: \033[30;46m");
                 quadratic::print_roots(tests[curtest]);
                 break;
             case 1:
-                printf("OK!\n");
+                printf("%s%sOK!%s", COLORS::T_RED, COLORS::T_ARTICLE, COLORS::T_WHITE);
                 break;
             default:
                 ASSERTIF(0, "default case", 1);
             }
         }
 
-        free_equations(tests, numtests);
+        free_equations(tests, num_tests);
         printf("\n");
         return 0;
     }

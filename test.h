@@ -1,11 +1,13 @@
 #ifndef TEST_DEF
 #define TEST_DEF
 
+#include "quadratic.h"
+
 /**
  * @brief   This namespace includes helpful objects for testing solver of quadratic equations.
  * @details You must have a file with tests. If there is 1 root, put it as 5th number.
  */
-namespace testing {
+namespace unit_tests {
     /**
      * @brief   This function tests the solver of quadratic equations.
      * @details Reads tests from a file with name from argument filename, each by 6 numbers in a row while new 6 numbers exists, last < 6 it throws away 
@@ -14,7 +16,7 @@ namespace testing {
      * @param [in] *filename - name of file wiht tests
      * @return 0 If no errors happend and non-zero number otherwise
      */
-    int test_quadratic(const char *filename);
+    int test_quadratic(quadratic::Equation **equation, int num_tests);
 }
 
 #endif

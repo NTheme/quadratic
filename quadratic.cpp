@@ -2,6 +2,7 @@
 #include <math.h>
 
 #include "common.h"
+#include "test.h"
 #include "quadratic.h"
 
 namespace quadratic {
@@ -46,20 +47,50 @@ namespace quadratic {
     }
 
     void free_equations(Equation **equations, int quantity) {
-        ASSERTIF(equations != NULL, "nullptr in equations", );
-
+        if(equations == NULL)
+            return;
+        
         for (int i = 0; i < quantity; i++) {
             free(equations[i]);
         }
         free(equations);
     }
 
-    int stream_input(Equation **equation, FILE *stream) {
-        ASSERTIF(stream   != NULL, "nullptr in stream",   0);
+    int equation_stream_input(Equation **equation, void *param, QUADRATIC_DEBUG test) {
+        ASSERTIF(param   != NULL, "nullptr in stream",   0);
+        ASSERTIF(equation != NULL, "nullptr in equation", 0);
+
+        FILE *stream = (FILE *)param;
+
+        if(test == QD_NDEBUG) {
+            long double a = NAN, b = NAN, c = NAN;
+            if (fscanf(stream, "%Lf %Lf %Lf", &a, &b, &c) != 3) {
+                return 0;
+            }
+
+            *equation = make_equation(a, b, c);
+        } else if (test == QD_DEBUG) {
+            long double a = NAN, b = NAN, c = NAN, x1 = NAN, x2 = NAN;
+            int num_roots = quadratic::RN_DEFAULT;
+            if (fscanf(stream, "%Lf %Lf %Lf %d %Lf %Lf", &a, &b, &c, &num_roots, &x1, &x2) != 6) {
+                return 0;
+            }
+
+            *equation = make_equation(a, b, c, num_roots, x1, x2);
+        } else {
+            printf("Unknown input mode\n");
+            return 0;
+        }
+        
+        return 1;
+    }
+
+    int equation_terminal_input(Equation **equation, const char **input) {
+        ASSERTIF(input    != NULL, "nullptr in argv",     0);
         ASSERTIF(equation != NULL, "nullptr in equation", 0);
 
         long double a = NAN, b = NAN, c = NAN;
-        if (fscanf(stream, "%Lf %Lf %Lf", &a, &b, &c) != 3) {
+        if (sscanf(*input, "%Lf", &a) + sscanf(*(input + 1), "%Lf", &b) + sscanf(*(input + 2), "%Lf", &c) != 3) {
             return 0;
         }
 
@@ -67,49 +98,73 @@ namespace quadratic {
         return 1;
     }
 
-    int full_stream_input(Equation ***equations, FILE *stream) {
+    int stream_input(Equation ***equations, FILE *stream, int start_index, QUADRATIC_DEBUG test) {
         ASSERTIF(stream    != NULL, "nullptr in stream",    0);
         ASSERTIF(equations != NULL, "nullptr in equations", 0);
 
-        size_t size = 1;
+        size_t size = (size_t)start_index + 1;
         *equations = realloc_equations(*equations, (size *= 2));
 
         Equation *equation = NULL;
         int read = 0;
-        for (; stream_input(&equation, stream) == 1; ++read) {
-            if (read == (int)size) {
+        for (; equation_stream_input(&equation, (void *)stream, test) == 1; ++read) {
+            if (read + start_index == (int)size) {
                 *equations = realloc_equations(*equations, (size *= 2));
             }
-            (*equations)[read] = equation;
+            (*equations)[read + start_index] = equation;
         }
 
-        return read;
+        return read;    
     }
 
     int terminal_input(Equation ***equations, int argc, const char **argv) {
         ASSERTIF(argv      != NULL, "nullptr in argv",      0);
         ASSERTIF(equations != NULL, "nullptr in equations", 0);
 
-        if (argc == 3 && argv[1][0] == '-' && argv[1][1] == 'f') {
-            FILE *input = fopen(argv[2], "r");
-            if (input == NULL) {
-                return 0;
+        Equation **tests = NULL;
+
+        int file_flag = 1, num_equations = 0, num_tests = 0;
+        for (; file_flag < argc - 1; file_flag += 2) {
+            if (argv[file_flag][0] != '-') {
+                break;
             }
-            return full_stream_input(equations, input);
+
+            FILE *input = fopen(argv[file_flag + 1], "r");
+            if (input == NULL) {
+                printf("Wrong name filename %s\n", argv[file_flag + 1]);
+            } else {                    
+                switch (argv[file_flag][1])
+                {
+                case 't':
+                    num_tests += stream_input(&tests, input, num_tests, QD_DEBUG);
+                    break;
+                case 'f':
+                    num_equations += stream_input(equations, input, num_equations, QD_NDEBUG);
+                    break;             
+                default:
+                    printf("Unknown flag %c", argv[file_flag][1]);
+                    break;
+                }
+                fclose(input);
+            }
         }
 
-        size_t size = 1;
+        if (tests != NULL) {
+            unit_tests::test_quadratic(tests, num_tests);
+        }
+
+        size_t size = (size_t)num_equations + 1;
         *equations = realloc_equations(*equations, (size *= 2));
 
-        long double a = 0, b = 0, c = 0;
-        int read = 0, numequations = (argc - 1) / 3;
-        for (; read < numequations && (sscanf(argv[read + 1], "%Lf", &a) + sscanf(argv[read + 2], "%Lf", &b) + sscanf(argv[read + 3], "%Lf", &c) == 3); ++read) {
-            if (read == (int)size) {
+        Equation *equation = NULL;
+        int read = 0;
+        for (; file_flag + 2 < argc && equation_terminal_input(&equation, argv + file_flag) == 1; ++read, file_flag += 3) {
+            if (read + num_equations == (int)size) {
                 *equations = realloc_equations(*equations, (size *= 2));
             }
-            (*equations)[read] = make_equation(a, b, c);
+            (*equations)[read + num_equations] = equation;
         }
-        return read;
+        return read + num_equations;
     }
 
     int print_roots(const Equation *equation) {
@@ -117,19 +172,19 @@ namespace quadratic {
 
         switch (equation->num_roots) {
         case RN_INF:
-            printf("infinity of roots\n");
+            printf("infinity of roots");
             break;
         case RN_ZERO:
-            printf("zero roots\n");
+            printf("zero roots");
             break;
         case RN_ONE:
-            printf("one root:  %+-10.5Lg\n", equation->x1);
+            printf("one  root:  %+-10.5Lg", equation->x1);
             break;
         case RN_TWO:
-            printf("two roots: %+-10.5Lg %+-10.5Lg\n", equation->x1, equation->x2);
+            printf("two  roots: %+-10.5Lg %+-10.5Lg", equation->x1, equation->x2);
             break;
         case RN_DEFAULT:
-            printf("uninitialized\n");
+            printf("uninitialized");
             break;
         default:
             ASSERTIF(0, "default case", 1);

@@ -21,30 +21,26 @@ namespace quadratic {
         int num_roots;
     } Equation;
 
-    /**
-     * @brief   Enumerated type of data consists of all different quantities of quadratic equation's roots.
-     * @details Type RM_DEFAULT is not a quantity. It is used for initialization.
-     * @param RM_DEFAULT - Not initialized
-     * @param RM_ZERO    - Zero roots
-     * @param RM_ONE     - One root
-     * @param RM_TWO     - Two roots
-     * @param RM_INF     - Infinity of roots
-     */
+    /// Enumerated type of data consists of all different quantities of quadratic equation's roots. Type RM_DEFAULT is not a quantity. It is used for initialization.
     typedef enum {
-        RN_DEFAULT,
-        RN_ZERO,
-        RN_ONE,
-        RN_TWO,
-        RN_INF
+        RN_DEFAULT, ///< Not initialized
+        RN_ZERO,    ///< Zero roots
+        RN_ONE,     ///< One root
+        RN_TWO,     ///< Two roots
+        RN_INF      ///< Infinity of roots
     } ROOT_NUMBER;
 
-    /**
-     * @brief Enumerated type of data with errors.
-     * @param QE_QUAD_ERROR - Error during initialization od Equation.
-     */
-    enum QUADRATIC_ERROR {
-        QE_QUAD_ERROR = -1
-    };
+ 
+    /// Enumerated type of data with errors.
+    typedef enum {
+        QE_QUAD_ERROR = -1 ///< Error during initialization od Equation.
+    } QUADRATIC_ERROR;
+
+    /// A flag to distinguish tests and real equations
+    typedef enum {
+        QD_DEBUG, ///< Parse tests
+        QD_NDEBUG ///< Parse input
+    } QUADRATIC_DEBUG;
 
     /**
      * @brief Makes an Equation using it's elements as arguments.
@@ -79,29 +75,44 @@ namespace quadratic {
     /**
      * @brief Function reads an Equation from *stream.
      * @details By default *stream is equal to stdin, but you can change it by giving this function secaon argument. First must have type Equation ** because stream_input dynamically
-     * allocates memory for equation and writes a pointer to result into first argument. Reads 3 long double numbers from stream and makes an Equation. 
+     * allocates memory for equation and writes a pointer to result into first argument. If test == QD_NDEBUG, functionreads 3 long double numbers from stream and makes an Equation: a, b, c. 
+     * If test == QD_DEBUG, function do same thing but with 6 numbers: a, b, c, num_roots, x1, x2.
      * @param [out] **equation - A pointer to pointer to equation. &equation will have a pointer to read equation
      * @param [in]  *stream    - A pointer to FILE. It is a pointer to stream with input data
      * @return 1 if equation was read successfully ant 0 otherwise (in case of any errors)
      */
-    int stream_input (Equation **equations, FILE *stream = stdin);
+    int equation_stream_input (Equation **equations, void *stream = (void *)stdin, QUADRATIC_DEBUG test = QD_NDEBUG);
+
+    /**
+     * @brief Function reads an Equation from array of strings.
+     * @details First argument must have type Equation ** because stream_input dynamically allocates memory for equation and writes a pointer to result into first argument. 
+     * Function reads 3 long double numbers from input, input + 1 and input + 2: a, b and c. Then makes an Equation.
+     * @param [out] **equation - A pointer to pointer to equation. &equation will have a pointer to read equation
+     * @param [in]  *argv      - Pointer to first string (where get a)
+     * @return 1 if equation was read successfully ant 0 otherwise (in case of any errors)
+     */
+    int equation_terminal_input(Equation **equation, const char **input);
 
     /**
      * @brief Function reads a plenty of Equation from *stream.
      * @details By default *stream is equal to stdin, but you can change it by giving this function secaon argument. First must have type Equation *** because full_stream_input dynamically
-     * allocates memory for array of Equation and writes a pointer to result into first argument. Function reads data from stream, each by 3 long double numbers in a row while new 3 numbers exists, 
-     * last < 3 it throws away (it's not important how numbers located on lines): a, b and c. Parses by each 3 elements and uses stream_input to make an Equation
+     * allocates memory for array of Equation and writes a pointer to result into first argument. If test == QD_NDEBUG, function reads data from stream, each by 3 long double numbers in a row 
+     * while new 3 numbers exists, last < 3 it throws away (it's not important how numbers located on lines): a, b and c. Parses by each 3 elements and uses equation_stream_input to make 
+     * an Equation. If test == QD_DEBUG, function do same thing but with 6 numbers: a, b, c, num_roots, x1, x2.
      * @param [out] ***equation - A pointer to pointer to pointer to equation. &equation will have a pointer to an array of read equations
      * @param [in]  *stream     - A pointer to FILE. It is a pointer to stream with input data
+     * @param [in]  start_index - Current size of equations 
+     * @param [in]  test        - Mode of input
      * @return number of equations that was read successfully
      */
-    int full_stream_input(Equation *** equations, FILE *stream = stdin);
+    int stream_input(Equation *** equations, FILE *stream = stdin, int start_index = 0, QUADRATIC_DEBUG test = QD_NDEBUG);
 
     /**
      * @brief Function reads a plenty of Equation from command line arguments (it can be a file)
      * @details First must have type Equation *** because full_stream_input dynamically allocates memory for array of Equation and writes a pointer to result into first argument. 
-     * Function reads data from terminal arguments that was given to program. If second element of argv is a flag -f, terminal_input tries to get plenty of Equation from file which name is 
-     * in third element of argv using full_stream_input. If it is not possible, function reads data from argv, each by 3 long double numbers in a row, one element from one element of argv, while new 
+     * Function reads data from terminal arguments that was given to program. Function follows this algotihm: if element of argv is a flag -f, terminal_input tries to get plenty of Equation 
+     * from file which name is in next element of argv using stream_input; if element of argv is a flag -t, terminal_input do same thing but assumes given equations in file as tests (6 numbers).
+     * Same with each even index. If it is not possible, function reads data, each by 3 long double numbers in a row, one element from one element of argv, while new 
      * 3 numbers exists, last < 3 it throws away (it's not important how numbers located on lines): a, b and c. Starts from argv[1]. Parses by each 3 and makes an Equation.
      * @param [out] ***equation - A pointer to pointer to pointer to equation. &equation will have a pointer to an array of read equations
      * @param [in]  argc        - Number of terminal arguments

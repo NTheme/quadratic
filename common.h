@@ -14,14 +14,25 @@
     }                                                                                                                                \
 }
 #else
-#define ASSERTIF(cond, desc, val))
+#define ASSERTIF(cond, desc, val)
 #endif
 
 const double EPS  = 1e-7;
 
 /**
+ * @brief  Used colors (obvious).
+ */
+namespace COLORS {
+    extern const char *T_REGULAR;
+    extern const char *T_ARTICLE;
+    extern const char *T_GREEN;
+    extern const char *T_WHITE;
+    extern const char *T_BLUE;
+    extern const char *T_RED;
+};
+
+/**
  * @brief   This namespace includes non-standart math functions that was used in quadratic equarions solver.
- * @details 
  */
 namespace common {
     /**
