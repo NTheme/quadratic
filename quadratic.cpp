@@ -103,7 +103,7 @@ namespace quadratic {
         ASSERTIF(equations != NULL, "nullptr in equations", 0);
 
         size_t size = (size_t)start_index + 1;
-        *equations = realloc_equations(*equations, (size *= 2));
+        *equations = realloc_equations(*equations, size);
 
         Equation *equation = NULL;
         int read = 0;
@@ -113,6 +113,7 @@ namespace quadratic {
             }
             (*equations)[read + start_index] = equation;
         }
+        *equations = realloc_equations(*equations, (size_t)(read + 1));
 
         return read;    
     }
@@ -154,7 +155,7 @@ namespace quadratic {
         }
 
         size_t size = (size_t)num_equations + 1;
-        *equations = realloc_equations(*equations, (size *= 2));
+        *equations = realloc_equations(*equations, size);
 
         Equation *equation = NULL;
         int read = 0;
@@ -164,6 +165,7 @@ namespace quadratic {
             }
             (*equations)[read + num_equations] = equation;
         }
+       *equations = realloc_equations(*equations, (size_t)(read + num_equations + 1));
         return read + num_equations;
     }
 

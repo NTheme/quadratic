@@ -21,7 +21,7 @@ int main(int argc, const char *argv[]) {
 		}
 	}
 
-	if (inputmore == 'y') {
+	if (inputmore == 'y' || argc == 1) {
 		int add = 0;
 		printf("Input number of equations: ");
 		while (scanf("%d", &add) != 1 || add < 0) {
